@@ -348,6 +348,38 @@
         .left .timeline-content { margin-left: auto; }
         .right .timeline-content { margin-right: auto; }
 
+        /* --- Phone Responsive Improvements for Timeline --- */
+        @media (max-width: 600px) {
+            .timeline-container::before,
+            .timeline-container::after {
+                left: 20px;
+                transform: none;
+            }
+
+            .thermometer-base-bulb {
+                left: 20px;
+                transform: translateX(-50%);
+            }
+
+            .timeline-item.left,
+            .timeline-item.right {
+                justify-content: flex-end;
+                padding-left: 45px;
+                padding-right: 5px;
+            }
+
+            .timeline-item::after {
+                left: 20px;
+                transform: translateX(-50%);
+            }
+
+            .timeline-content {
+                max-width: 100%;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+            }
+        }
+
         .date-badge {
             font-size: 0.75rem;
             font-weight: bold;
