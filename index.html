@@ -551,7 +551,7 @@
         <div class="top-bar">
             <div>
                 <span style="font-size:0.85rem; font-weight:bold;" id="roleIndicator">Role: Normal</span> | 
-                <span style="font-size:0.85rem; opacity:0.8;" id="slugDisplay">Slug: /@noanli</span>
+                <span style="font-size:0.85rem; opacity:0.8;" id="slugDisplay">Slug: /@</span>
             </div>
             <div style="display:flex; gap:10px; margin-top: 8px;">
                 <button class="theme-toggle-btn" onclick="toggleTheme()">Switch Theme</button>
@@ -571,7 +571,7 @@
             <h2>Manage BioLink Profile & Slug</h2>
             <div class="form-group">
                 <label>Custom Profile Slug (URL Identifier)</label>
-                <input type="text" id="inputSlug" value="noanli" placeholder="e.g. noanli">
+                <input type="text" id="inputSlug" placeholder="e.g. myname">
             </div>
             <div class="form-group">
                 <label>Avatar (URL or Base64)</label>
@@ -579,31 +579,31 @@
             </div>
             <div class="form-group">
                 <label>Name</label>
-                <input type="text" id="inputName" value="Noan Li">
+                <input type="text" id="inputName" placeholder="Your Name">
             </div>
             <div class="form-group">
                 <label>Short Bio</label>
-                <input type="text" id="inputShortBio" value="Full-stack developer & digital creator.">
+                <input type="text" id="inputShortBio" placeholder="A brief description...">
             </div>
             <div class="form-group">
                 <label>Email</label>
-                <input type="email" id="inputEmail" value="noan@example.com">
+                <input type="email" id="inputEmail" placeholder="your@email.com">
             </div>
             <div class="form-group">
                 <label>Website</label>
-                <input type="text" id="inputWebsite" value="https://myportfolio.com">
+                <input type="text" id="inputWebsite" placeholder="https://yourwebsite.com">
             </div>
             <div class="form-group">
                 <label>Telephone</label>
-                <input type="text" id="inputPhone" value="+1234567890">
+                <input type="text" id="inputPhone" placeholder="+1234567890">
             </div>
             <div class="form-group">
                 <label>Long Info</label>
-                <textarea id="inputLongInfo">Passionate about clean code and interactive web systems.</textarea>
+                <textarea id="inputLongInfo" placeholder="More detailed information..."></textarea>
             </div>
             <div class="form-group">
                 <label>Address</label>
-                <input type="text" id="inputAddress" value="San Francisco, CA">
+                <input type="text" id="inputAddress" placeholder="City, Country">
             </div>
 
             <hr style="border-color:var(--border-color); margin: 15px 0;">
@@ -740,26 +740,19 @@
 
         // --- Application State ---
         window.appData = {
-            slug: "noanli",
+            slug: "",
             role: "normal",
-            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-            name: "Noan Li",
-            shortBio: "Full-stack developer & digital creator.",
-            email: "noan@example.com",
-            website: "https://myportfolio.com",
-            telephone: "+1234567890",
-            longInfo: "Passionate about clean code and interactive web systems.",
-            address: "San Francisco, CA",
-            extraFields: [
-                { label: "YouTube 1 - Main Channel", url: "https://youtube.com" },
-                { label: "GitHub Profile", url: "https://github.com" }
-            ],
-            stories: [
-                { title: "System Online", datetime: "2026-07-14T10:00", desc: "Initialized all hub systems successfully.", url: "" }
-            ],
-            videos: [
-                { title: "Sample Video Highlight", id: "dQw4w9WgXcQ", color: "#ff4757" }
-            ]
+            avatar: "",
+            name: "",
+            shortBio: "",
+            email: "",
+            website: "",
+            telephone: "",
+            longInfo: "",
+            address: "",
+            extraFields: [],
+            stories: [],
+            videos: []
         };
 
         let publicLoadedCount = 0;
@@ -812,6 +805,13 @@
         window.handleLogout = async function() {
             try {
                 await signOut(auth);
+                // Wipe the memory so the next user doesn't see old data!
+                window.appData = {
+                    slug: "", role: "normal", avatar: "", name: "", shortBio: "",
+                    email: "", website: "", telephone: "", longInfo: "", address: "",
+                    extraFields: [], stories: [], videos: []
+                };
+                window.location.reload(); 
             } catch (error) {
                 console.error("Logout error:", error);
             }
@@ -858,7 +858,11 @@
             const user = auth.currentUser;
             if (!user) return;
             try {
-                await setDoc(doc(db, "users", user.uid), window.appData, { merge: true });
+                // Create a safe copy of the data and remove the role field before saving
+                const dataToSave = { ...window.appData };
+                delete dataToSave.role; 
+
+                await setDoc(doc(db, "users", user.uid), dataToSave, { merge: true });
                 alert("Profile and data saved to Firestore!");
             } catch (e) {
                 console.error("Error saving data:", e);
