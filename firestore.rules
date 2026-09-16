@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+
+      match /links/{itemId} {
+        allow read: if true;
+        allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+      }
+      match /statuses/{itemId} {
+        allow read: if true;
+        allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+      }
+      match /videos/{itemId} {
+        allow read: if true;
+        allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
