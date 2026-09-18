@@ -39,3 +39,15 @@
 .clock-dot{width:6px!important;height:6px!important;background:#111!important;box-shadow:0 0 0 1.5px #e02020!important}
 .clock-pop{top:50px!important}
 @media(max-width:600px){.mini-clock{width:40px!important;height:40px!important}.clock-pop{top:48px!important}}
+
+/* Music remote: dormant when collapsed, glow only while expanded */
+.wall-remote:not(.open) .remote-main{
+  color:#fff!important;
+  text-shadow:none!important;
+  box-shadow:0 7px 18px #0008!important;
+}
+.wall-remote.open .remote-main{
+  color:#8feaff!important;
+  text-shadow:0 0 12px #69ddff!important;
+  box-shadow:0 0 18px #7b5cff35,0 7px 22px #0009!important;
+}
