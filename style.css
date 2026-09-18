@@ -30,3 +30,12 @@
 .clock-dot{z-index:3;width:5px!important;height:5px!important;box-shadow:0 0 0 1px var(--card-bg)}
 .clock-pop{z-index:999!important;top:44px!important;background:var(--card-bg)!important;color:var(--text-color)!important;border:1px solid var(--border-color)!important;box-shadow:0 12px 32px #0008}
 @media(max-width:600px){.mini-clock{width:34px;height:34px}.clock-pop{top:42px!important}}
+
+/* Simple theme-independent public clock */
+.mini-clock{width:42px!important;height:42px!important;border:2px solid #111!important;border-radius:50%!important;background:#fff!important;color:#111!important;box-shadow:0 2px 8px #0004!important}
+.mini-clock:before{display:none!important}
+.clock-hour{height:10px!important;width:4px!important;background:#111!important;border-radius:4px!important}
+.clock-minute{height:15px!important;width:3px!important;background:#e02020!important;border-radius:4px!important}
+.clock-dot{width:6px!important;height:6px!important;background:#111!important;box-shadow:0 0 0 1.5px #e02020!important}
+.clock-pop{top:50px!important}
+@media(max-width:600px){.mini-clock{width:40px!important;height:40px!important}.clock-pop{top:48px!important}}
