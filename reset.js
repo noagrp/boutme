@@ -25,7 +25,8 @@ window.resetMyBoutmeProfile=async()=>{
     await Promise.all([
       clearCollection(user.uid,'links'),
       clearCollection(user.uid,'statuses'),
-      clearCollection(user.uid,'videos')
+      clearCollection(user.uid,'videos'),
+      clearCollection(user.uid,'photos')
     ]);
     await setDoc(doc(db,'users',user.uid),{
       slug:'',avatar:'',name:'',shortBio:'',email:'',website:'',telephone:'',longInfo:'',address:''
