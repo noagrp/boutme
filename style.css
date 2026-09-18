@@ -19,3 +19,14 @@
 #linksLoadingMsg,#timelineLoadingMsg,#videosLoadingMsg,#photosLoadingMsg{display:none!important}
 @media(max-width:700px){#pubPanel3{padding:7px!important}#pubPhotoWall{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.photo-card{border-radius:10px}.photo-card:hover{transform:none;box-shadow:none}}
 .public-identity{position:relative;display:flex;align-items:center;gap:9px;min-width:0}.mini-clock{position:relative;flex:0 0 auto;width:25px;height:25px;padding:0;border:1px solid var(--border-color);border-radius:50%;background:var(--bg-color);color:var(--text-color);cursor:pointer}.clock-hour,.clock-minute{position:absolute;left:50%;bottom:50%;display:block;width:1.5px;background:currentColor;transform-origin:50% 100%;border-radius:2px}.clock-hour{height:6px}.clock-minute{height:9px;opacity:.8}.clock-dot{position:absolute;left:50%;top:50%;width:3px;height:3px;border-radius:50%;background:currentColor;transform:translate(-50%,-50%)}.clock-pop{position:absolute;z-index:30;left:0;top:34px;min-width:150px;padding:10px 12px;border:1px solid var(--border-color);border-radius:10px;background:var(--card-bg);color:var(--text-color);box-shadow:0 10px 28px #0005;white-space:nowrap}.clock-pop strong,.clock-pop span{display:block}.clock-pop strong{font-size:.9rem}.clock-pop span{margin-top:2px;font-size:.68rem;opacity:.65}.public-view-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Public identity clock refinement */
+#publicProfileView>div:first-child{position:relative;z-index:40;overflow:visible!important}
+.public-identity{position:relative;z-index:41;overflow:visible!important;gap:11px}
+.mini-clock{width:36px;height:36px;overflow:hidden;border:2px solid currentColor!important;background:var(--card-bg)!important;color:var(--text-color)!important;box-shadow:inset 0 0 0 2px var(--card-bg),0 2px 8px #0003}
+.mini-clock:before{content:'';position:absolute;inset:4px;border:1px solid currentColor;border-radius:50%;opacity:.22}
+.clock-hour,.clock-minute{z-index:2;width:2px!important;background:currentColor!important}
+.clock-hour{height:8px!important}
+.clock-minute{height:11px!important}
+.clock-dot{z-index:3;width:5px!important;height:5px!important;box-shadow:0 0 0 1px var(--card-bg)}
+.clock-pop{z-index:999!important;top:44px!important;background:var(--card-bg)!important;color:var(--text-color)!important;border:1px solid var(--border-color)!important;box-shadow:0 12px 32px #0008}
+@media(max-width:600px){.mini-clock{width:34px;height:34px}.clock-pop{top:42px!important}}
