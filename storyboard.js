@@ -26,11 +26,11 @@ function injectStyles(){
  .story-tools{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:8px;margin-bottom:14px}
  .story-tools input,.story-tools select{margin:0}
  .storyboard-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;width:100%}
- .story-card{background:var(--card-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:12px;overflow:hidden;min-width:0}
+ .story-card{background:var(--card-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:12px;overflow:hidden;min-width:0;height:100%}
  .story-card-btn{width:100%;height:100%;display:flex;flex-direction:column;gap:8px;text-align:left;padding:15px;border:0;background:transparent;color:inherit;cursor:pointer;text-decoration:none}
  .story-card-title{font-weight:700;font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
  .story-card-date{font-size:.72rem;opacity:.58}
- .story-preview{font-family:'Courier New',Courier,monospace;font-size:.82rem;line-height:1.55;opacity:.8;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;min-height:5.1em}
+ .story-preview{font-family:'Courier New',Courier,monospace;font-size:.82rem;line-height:1.55;opacity:.8;display:-webkit-box;-webkit-line-clamp:11;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;height:17.05em}
  .story-read-link{margin-top:auto;font-size:.76rem;font-weight:700;opacity:.72;text-align:right}
  .story-sentinel{grid-column:1/-1;height:1px;width:100%}
  .story-reader{display:none;background:var(--card-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:12px;overflow:hidden}
@@ -103,6 +103,7 @@ async function resolvePublicOwner(){
 function closeStoryReader(){const reader=document.getElementById('storyReader'),list=document.getElementById('publicStoryList'),tools=document.querySelector('#pubPanel4 .story-tools');if(reader)reader.classList.remove('open');if(list)list.style.display='grid';if(tools)tools.style.display='grid'}
 function openStoryReader(s){const reader=document.getElementById('storyReader'),list=document.getElementById('publicStoryList'),tools=document.querySelector('#pubPanel4 .story-tools');if(!reader)return;storyReaderTitle.textContent=s.title||'Story';storyReaderDate.textContent=fmtDate(s.date);storyReaderBody.textContent=s.body||'';if(list)list.style.display='none';if(tools)tools.style.display='none';reader.classList.add('open');reader.scrollIntoView({behavior:'smooth',block:'start'})}
 function currentMode(){const term=normTitle(document.getElementById('storySearchInput')?.value||''),sort=document.getElementById('storySortSelect')?.value||'new';return{term,sort,key:`${term}|${sort}`}}
+function syncStoryFooter(){const footer=document.getElementById('publicLoadStatus'),panel=document.getElementById('pubPanel4');if(footer&&panel?.classList.contains('active'))footer.textContent=!storyLoading&&!storyHasMore?'All stories loaded.':''}
 function makeStoryQuery(owner,cursor=null){
  const {term,sort}=currentMode(),c=collection(db,'users',owner,'stories'),parts=[];
  if(term){parts.push(where('titleLower','>=',term),where('titleLower','<=',term+'\uf8ff'),orderBy('titleLower','asc'))}
@@ -123,13 +124,13 @@ function renderPublicRows(){
  publicRows.forEach(x=>{const c=document.createElement('article');c.className='story-card';const url=safeExternalUrl(x.externalUrl),btn=document.createElement(url?'a':'button');if(url){btn.href=url;btn.target='_blank';btn.rel='noopener noreferrer';btn.setAttribute('aria-label',`Open ${x.title||'story'} on external website`)}else{btn.type='button';btn.onclick=()=>openStoryReader(x)}btn.className='story-card-btn';btn.innerHTML=`<div class="story-card-title">${esc(x.title||'Story')}</div><div class="story-card-date">${esc(fmtDate(x.date))}</div><div class="story-preview">${esc((x.summary||x.body||'').trim())}</div><div class="story-read-link">${url?'Visit website ↗':'Read ›'}</div>`;c.appendChild(btn);list.appendChild(c)});
  if(storyHasMore){const sentinel=document.createElement('div');sentinel.className='story-sentinel';sentinel.setAttribute('aria-hidden','true');list.appendChild(sentinel);attachStoryLazyLoad()}
 }
-async function resetPublicStories(){storyCursor=null;storyHasMore=false;publicRows=[];storyModeKey='';if(storyObserver){storyObserver.disconnect();storyObserver=null}await loadPublicStories(true)}
+async function resetPublicStories(){storyCursor=null;storyHasMore=false;publicRows=[];storyModeKey='';if(storyObserver){storyObserver.disconnect();storyObserver=null}const footer=document.getElementById('publicLoadStatus');if(footer)footer.textContent='';await loadPublicStories(true)}
 async function loadPublicStories(reset=false){
  const list=document.getElementById('publicStoryList');if(!list||storyLoading)return;
  publicStoryOwner=publicStoryOwner||await resolvePublicOwner();if(!publicStoryOwner){publicRows=[];renderPublicRows();return}
  const mode=currentMode();if(reset||storyModeKey!==mode.key){publicRows=[];storyCursor=null;storyModeKey=mode.key}
  storyLoading=true;if(!publicRows.length)list.innerHTML='<div class="story-empty">Loading stories...</div>';
- try{const s=await getDocs(makeStoryQuery(publicStoryOwner,storyCursor));const rows=s.docs.map(d=>({_id:d.id,...d.data()}));publicRows.push(...rows);storyCursor=s.docs.at(-1)||storyCursor;storyHasMore=s.size===STORY_PAGE;renderPublicRows()}catch(e){console.warn('Could not load stories:',e);list.innerHTML='<div class="story-empty">StoryBoard unavailable.</div>'}finally{storyLoading=false;if(storyHasMore)setTimeout(attachStoryLazyLoad,0)}
+ let succeeded=false;try{const s=await getDocs(makeStoryQuery(publicStoryOwner,storyCursor));const rows=s.docs.map(d=>({_id:d.id,...d.data()}));publicRows.push(...rows);storyCursor=s.docs.at(-1)||storyCursor;storyHasMore=s.size===STORY_PAGE;renderPublicRows();succeeded=true}catch(e){console.warn('Could not load stories:',e);list.innerHTML='<div class="story-empty">StoryBoard unavailable.</div>'}finally{storyLoading=false;if(succeeded)syncStoryFooter();if(storyHasMore)setTimeout(attachStoryLazyLoad,0)}
 }
 window.loadPublicStories=loadPublicStories;
 
