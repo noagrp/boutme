@@ -20,8 +20,9 @@
 <style>
 #pubWall .tv-box.video-focus{grid-column:1/-1!important;transform:rotate(0deg) translateY(0) scale(1)!important;z-index:6;box-shadow:0 22px 55px #000b}
 #pubWall .tv-box.video-focus:hover{transform:rotate(0deg) translateY(0) scale(1)!important}
+#pubWall .tv-title{cursor:pointer}
 </style>
 <script>
-document.addEventListener('click',function(e){const play=e.target.closest('.tv-play');if(!play)return;const card=play.closest('.tv-box');if(!card||!card.closest('#pubWall'))return;document.querySelectorAll('#pubWall .tv-box.video-focus').forEach(function(x){if(x!==card)x.classList.remove('video-focus')});card.classList.add('video-focus')},true);
+document.addEventListener('click',function(e){const title=e.target.closest('.tv-title');if(!title)return;const card=title.closest('.tv-box');if(!card||!card.closest('#pubWall'))return;const wasOpen=card.classList.contains('video-focus');document.querySelectorAll('#pubWall .tv-box.video-focus').forEach(function(x){x.classList.remove('video-focus')});if(!wasOpen)card.classList.add('video-focus')});
 </script>
 </body></html>
