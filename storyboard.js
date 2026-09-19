@@ -5,7 +5,7 @@ import{getFirestore,collection,addDoc,deleteDoc,doc,getDocs,limit,orderBy,query,
 const app=getApps().length?getApp():null;
 if(!app)throw new Error('Firebase app unavailable');
 const auth=getAuth(app),db=getFirestore(app),STORY_PAGE=20;
-let stories=[],editingId=null,publicStoryOwner=null,publicRows=[],storyCursor=null,storyHasMore=false,storyLoading=false,storyModeKey='';
+let stories=[],editingId=null,publicStoryOwner=null,publicRows=[],storyCursor=null,storyHasMore=false,storyLoading=false,storyModeKey='',storyObserver=null;
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtDate=v=>{if(!v)return'';const d=new Date(v);return Number.isNaN(d.getTime())?v:d.toLocaleString([],{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})};
@@ -31,8 +31,7 @@ function injectStyles(){
  .story-card-date{font-size:.72rem;opacity:.58}
  .story-preview{font-family:'Courier New',Courier,monospace;font-size:.82rem;line-height:1.55;opacity:.8;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;min-height:5.1em}
  .story-read-link{margin-top:auto;font-size:.76rem;font-weight:700;opacity:.72;text-align:right}
- .story-load-row{grid-column:1/-1;text-align:center;padding:5px 0 2px}
- .story-load-btn{border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);border-radius:9px;padding:9px 16px;cursor:pointer;font-weight:700}
+ .story-sentinel{grid-column:1/-1;height:1px;width:100%}
  .story-reader{display:none;background:var(--card-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:12px;overflow:hidden}
  .story-reader.open{display:block}
  .story-reader-top{display:flex;align-items:flex-start;gap:10px;padding:13px 15px;border-bottom:1px solid var(--border-color)}
@@ -110,19 +109,25 @@ function makeStoryQuery(owner,cursor=null){
  else parts.push(orderBy('date','desc'));
  if(cursor)parts.push(startAfter(cursor));parts.push(limit(STORY_PAGE));return query(c,...parts)
 }
+function attachStoryLazyLoad(){
+ if(storyObserver){storyObserver.disconnect();storyObserver=null}
+ const sentinel=document.querySelector('#publicStoryList .story-sentinel');if(!sentinel||!storyHasMore)return;
+ storyObserver=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)&&storyHasMore&&!storyLoading)loadPublicStories(false)},{root:null,rootMargin:'320px 0px',threshold:0});
+ storyObserver.observe(sentinel);
+}
 function renderPublicRows(){
- const list=document.getElementById('publicStoryList');if(!list)return;closeStoryReader();list.innerHTML='';
+ const list=document.getElementById('publicStoryList');if(!list)return;closeStoryReader();if(storyObserver){storyObserver.disconnect();storyObserver=null}list.innerHTML='';
  if(!publicRows.length){list.innerHTML='<div class="story-empty">No matching stories.</div>';return}
  publicRows.forEach(x=>{const c=document.createElement('article');c.className='story-card';const btn=document.createElement('button');btn.type='button';btn.className='story-card-btn';btn.innerHTML=`<div class="story-card-title">${esc(x.title||'Story')}</div><div class="story-card-date">${esc(fmtDate(x.date))}</div><div class="story-preview">${esc((x.body||'').trim())}</div><div class="story-read-link">Read ›</div>`;btn.onclick=()=>openStoryReader(x);c.appendChild(btn);list.appendChild(c)});
- if(storyHasMore){const row=document.createElement('div');row.className='story-load-row';row.innerHTML='<button class="story-load-btn" type="button">Load more</button>';row.querySelector('button').onclick=()=>loadPublicStories(false);list.appendChild(row)}
+ if(storyHasMore){const sentinel=document.createElement('div');sentinel.className='story-sentinel';sentinel.setAttribute('aria-hidden','true');list.appendChild(sentinel);attachStoryLazyLoad()}
 }
-async function resetPublicStories(){storyCursor=null;storyHasMore=false;publicRows=[];storyModeKey='';await loadPublicStories(true)}
+async function resetPublicStories(){storyCursor=null;storyHasMore=false;publicRows=[];storyModeKey='';if(storyObserver){storyObserver.disconnect();storyObserver=null}await loadPublicStories(true)}
 async function loadPublicStories(reset=false){
  const list=document.getElementById('publicStoryList');if(!list||storyLoading)return;
  publicStoryOwner=publicStoryOwner||await resolvePublicOwner();if(!publicStoryOwner){publicRows=[];renderPublicRows();return}
  const mode=currentMode();if(reset||storyModeKey!==mode.key){publicRows=[];storyCursor=null;storyModeKey=mode.key}
  storyLoading=true;if(!publicRows.length)list.innerHTML='<div class="story-empty">Loading stories...</div>';
- try{const s=await getDocs(makeStoryQuery(publicStoryOwner,storyCursor));const rows=s.docs.map(d=>({_id:d.id,...d.data()}));publicRows.push(...rows);storyCursor=s.docs.at(-1)||storyCursor;storyHasMore=s.size===STORY_PAGE;renderPublicRows()}catch(e){console.warn('Could not load stories:',e);list.innerHTML='<div class="story-empty">StoryBoard unavailable.</div>'}finally{storyLoading=false}
+ try{const s=await getDocs(makeStoryQuery(publicStoryOwner,storyCursor));const rows=s.docs.map(d=>({_id:d.id,...d.data()}));publicRows.push(...rows);storyCursor=s.docs.at(-1)||storyCursor;storyHasMore=s.size===STORY_PAGE;renderPublicRows()}catch(e){console.warn('Could not load stories:',e);list.innerHTML='<div class="story-empty">StoryBoard unavailable.</div>'}finally{storyLoading=false;if(storyHasMore)setTimeout(attachStoryLazyLoad,0)}
 }
 window.loadPublicStories=loadPublicStories;
 
