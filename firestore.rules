@@ -1,0 +1,302 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(userId) {
+      return request.auth != null &&
+             request.auth.uid == userId;
+    }
+
+    function optionalString(data, field, maxLength) {
+      return !(field in data) ||
+             (data[field] is string &&
+              data[field].size() <= maxLength);
+    }
+
+    function httpsUrl(value, maxLength) {
+      return value is string &&
+             value.size() <= maxLength &&
+             value.matches('^https://.*$');
+    }
+
+    function validAvatar(value) {
+      return value is string &&
+             value.size() <= 275000 &&
+             (
+               value == '' ||
+               value.matches('^https://.*$') ||
+               value.matches('^data:image/(png|jpeg|jpg|webp|gif);base64,.*$')
+             );
+    }
+
+    // =========================
+    // USER PROFILE
+    // =========================
+
+    match /users/{userId} {
+
+      allow read: if true;
+
+      allow create, update: if
+        isOwner(userId) &&
+        request.resource.data.keys().hasOnly([
+          'slug',
+          'avatar',
+          'name',
+          'shortBio',
+          'email',
+          'website',
+          'telephone',
+          'longInfo',
+          'address'
+        ]) &&
+
+        optionalString(request.resource.data, 'slug', 50) &&
+        optionalString(request.resource.data, 'name', 50) &&
+        optionalString(request.resource.data, 'shortBio', 160) &&
+        optionalString(request.resource.data, 'email', 254) &&
+        optionalString(request.resource.data, 'website', 1000) &&
+        optionalString(request.resource.data, 'telephone', 40) &&
+        optionalString(request.resource.data, 'longInfo', 3000) &&
+        optionalString(request.resource.data, 'address', 200) &&
+
+        (
+          !('avatar' in request.resource.data) ||
+          validAvatar(request.resource.data.avatar)
+        ) &&
+
+        (
+          !('website' in request.resource.data) ||
+          request.resource.data.website == '' ||
+          httpsUrl(request.resource.data.website, 1000)
+        );
+
+      allow delete: if isOwner(userId);
+
+
+      // =========================
+      // EXTRA LINKS
+      // =========================
+
+      match /links/{linkId} {
+
+        allow read: if true;
+
+        allow create, update: if
+          isOwner(userId) &&
+          request.resource.data.keys().hasOnly([
+            'label',
+            'url',
+            'position'
+          ]) &&
+
+          request.resource.data.label is string &&
+          request.resource.data.label.size() <= 120 &&
+
+          request.resource.data.url is string &&
+          request.resource.data.url.size() <= 1000 &&
+
+          (
+            request.resource.data.url == '' ||
+            request.resource.data.url.matches('^https://.*$')
+          ) &&
+
+          request.resource.data.position is int &&
+          request.resource.data.position >= 0;
+
+        allow delete: if isOwner(userId);
+      }
+
+
+      // =========================
+      // STATUS / TIMELINE
+      // =========================
+
+      match /statuses/{statusId} {
+
+        allow read: if true;
+
+        allow create, update: if
+          isOwner(userId) &&
+          request.resource.data.keys().hasOnly([
+            'title',
+            'datetime',
+            'desc',
+            'url'
+          ]) &&
+
+          request.resource.data.title is string &&
+          request.resource.data.title.size() > 0 &&
+          request.resource.data.title.size() <= 120 &&
+
+          request.resource.data.datetime is string &&
+          request.resource.data.datetime.size() <= 40 &&
+
+          request.resource.data.desc is string &&
+          request.resource.data.desc.size() <= 2000 &&
+
+          request.resource.data.url is string &&
+          request.resource.data.url.size() <= 1000;
+
+        allow delete: if isOwner(userId);
+      }
+
+
+      // =========================
+      // VIDEOBOX
+      // =========================
+
+      match /videos/{videoId} {
+
+        allow read: if true;
+
+        allow create, update: if
+          isOwner(userId) &&
+          request.resource.data.keys().hasOnly([
+            'title',
+            'id',
+            'wallColor',
+            'position'
+          ]) &&
+
+          request.resource.data.title is string &&
+          request.resource.data.title.size() > 0 &&
+          request.resource.data.title.size() <= 120 &&
+
+          request.resource.data.id is string &&
+          request.resource.data.id.size() > 0 &&
+          request.resource.data.id.size() <= 100 &&
+
+          request.resource.data.wallColor is string &&
+          request.resource.data.wallColor.size() <= 40 &&
+
+          request.resource.data.position is int &&
+          request.resource.data.position >= 0;
+
+        allow delete: if isOwner(userId);
+      }
+
+
+      // =========================
+      // PHOTOWALL
+      // URL ONLY
+      // =========================
+
+      match /photos/{photoId} {
+
+        allow read: if true;
+
+        allow create, update: if
+          isOwner(userId) &&
+          request.resource.data.keys().hasOnly([
+            'title',
+            'description',
+            'image',
+            'position'
+          ]) &&
+
+          optionalString(
+            request.resource.data,
+            'title',
+            120
+          ) &&
+
+          optionalString(
+            request.resource.data,
+            'description',
+            1000
+          ) &&
+
+          request.resource.data.image is string &&
+          request.resource.data.image.size() > 0 &&
+          request.resource.data.image.size() <= 2000 &&
+          request.resource.data.image.matches('^https://.*$') &&
+
+          request.resource.data.position is int &&
+          request.resource.data.position >= 0;
+
+        allow delete: if isOwner(userId);
+      }
+
+
+      // =========================
+      // PHOTOWALL MUSIC
+      // =========================
+
+      match /songs/{songId} {
+
+        allow read: if true;
+
+        allow create, update: if
+          isOwner(userId) &&
+          request.resource.data.keys().hasOnly([
+            'title',
+            'url',
+            'position'
+          ]) &&
+
+          request.resource.data.title is string &&
+          request.resource.data.title.size() > 0 &&
+          request.resource.data.title.size() <= 120 &&
+
+          request.resource.data.url is string &&
+          request.resource.data.url.size() > 0 &&
+          request.resource.data.url.size() <= 2000 &&
+          request.resource.data.url.matches('^https://.*$') &&
+
+          request.resource.data.position is int &&
+          request.resource.data.position >= 0;
+
+        allow delete: if isOwner(userId);
+      }
+
+
+      // =========================
+      // STORYBOARD
+      // =========================
+
+      match /stories/{storyId} {
+
+        // Public StoryBoard reading, sorting and normal queries.
+        allow read: if true;
+
+        // Only the profile owner can publish or edit stories.
+        allow create, update: if
+          isOwner(userId) &&
+          request.resource.data.keys().hasOnly([
+            'title',
+            'body',
+            'date',
+            'position'
+          ]) &&
+
+          request.resource.data.title is string &&
+          request.resource.data.title.size() > 0 &&
+          request.resource.data.title.size() <= 120 &&
+
+          request.resource.data.body is string &&
+          request.resource.data.body.size() > 0 &&
+          request.resource.data.body.size() <= 50000 &&
+
+          request.resource.data.date is string &&
+          request.resource.data.date.size() > 0 &&
+          request.resource.data.date.size() <= 40 &&
+
+          request.resource.data.position is int &&
+          request.resource.data.position >= 0;
+
+        allow delete: if isOwner(userId);
+      }
+    }
+
+
+    // =========================
+    // DEFAULT DENY
+    // =========================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
