@@ -5,10 +5,11 @@ import{getFirestore,collection,addDoc,deleteDoc,doc,getDocs,limit,orderBy,query,
 const app=getApps().length?getApp():null;
 if(!app)throw new Error('Firebase app unavailable');
 const auth=getAuth(app),db=getFirestore(app);
-let stories=[],editingId=null,publicStoryOwner=null;
+let stories=[],publicStories=[],editingId=null,publicStoryOwner=null;
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtDate=v=>{if(!v)return'';const d=new Date(v);return Number.isNaN(d.getTime())?v:d.toLocaleString([],{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})};
+const storyTime=s=>{const d=new Date(s.date||0);return Number.isNaN(d.getTime())?0:d.getTime()};
 
 function injectStyles(){
  const s=document.createElement('style');
@@ -21,16 +22,24 @@ function injectStyles(){
  .tab-scroll-btn:active{transform:scale(.96)}
  .story-form-note{font-size:.75rem;opacity:.6;margin:-3px 0 10px}
  #storyBodyInput{min-height:240px;height:36vh;font-family:'Courier New',Courier,monospace;line-height:1.65}
- .storyboard-list{display:flex;flex-direction:column;gap:12px;width:100%}
- .story-card{background:var(--card-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:12px;overflow:hidden}
- .story-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;padding:13px 15px;border:0;background:transparent;color:inherit;cursor:pointer}
- .story-head-copy{min-width:0}.story-head-title{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.story-head-date{font-size:.72rem;opacity:.6;margin-top:3px}.story-arrow{font-size:1rem;opacity:.65;transition:transform .2s}
- .story-card.open .story-arrow{transform:rotate(90deg)}
- .story-body{display:none;border-top:1px solid var(--border-color);padding:clamp(16px,3vw,28px);font-family:'Courier New',Courier,monospace;font-size:clamp(.92rem,1.8vw,1rem);line-height:1.85;white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere}
- .story-card.open .story-body{display:block}
- .story-empty{text-align:center;padding:28px 12px;opacity:.6}
+ .story-tools{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:8px;margin-bottom:14px}
+ .story-tools input,.story-tools select{margin:0}
+ .storyboard-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;width:100%}
+ .story-card{background:var(--card-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:12px;overflow:hidden;min-width:0}
+ .story-card-btn{width:100%;height:100%;display:flex;flex-direction:column;gap:8px;text-align:left;padding:15px;border:0;background:transparent;color:inherit;cursor:pointer}
+ .story-card-title{font-weight:700;font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .story-card-date{font-size:.72rem;opacity:.58}
+ .story-preview{font-family:'Courier New',Courier,monospace;font-size:.82rem;line-height:1.55;opacity:.8;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;min-height:5.1em}
+ .story-read-link{margin-top:auto;font-size:.76rem;font-weight:700;opacity:.72;text-align:right}
+ .story-reader{display:none;background:var(--card-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:12px;overflow:hidden}
+ .story-reader.open{display:block}
+ .story-reader-top{display:flex;align-items:flex-start;gap:10px;padding:13px 15px;border-bottom:1px solid var(--border-color)}
+ .story-back{flex:0 0 auto;border:1px solid var(--border-color);background:var(--bg-color);color:var(--text-color);border-radius:8px;padding:7px 11px;cursor:pointer;font-weight:700}
+ .story-reader-heading{min-width:0;flex:1}.story-reader-title{font-size:1.08rem;font-weight:700;overflow-wrap:anywhere}.story-reader-date{font-size:.72rem;opacity:.58;margin-top:3px}
+ .story-reader-body{padding:clamp(18px,3vw,34px);font-family:'Courier New',Courier,monospace;font-size:clamp(.92rem,1.8vw,1rem);line-height:1.85;white-space:pre-wrap;text-align:justify;overflow-wrap:anywhere}
+ .story-empty{grid-column:1/-1;text-align:center;padding:28px 12px;opacity:.6}
  .story-manager-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
- @media(max-width:600px){.tabs-shell{grid-template-columns:30px minmax(0,1fr) 30px;gap:4px}.tabs-shell>.tabs-nav .tab-btn{flex:0 0 auto;min-width:88px}.tab-scroll-btn{border-radius:8px}.story-head{padding:12px}.story-body{padding:16px 13px;text-align:justify}}
+ @media(max-width:600px){.tabs-shell{grid-template-columns:30px minmax(0,1fr) 30px;gap:4px}.tabs-shell>.tabs-nav .tab-btn{flex:0 0 auto;min-width:88px}.tab-scroll-btn{border-radius:8px}.story-tools{grid-template-columns:minmax(0,1fr) 118px}.storyboard-list{grid-template-columns:1fr}.story-card-btn{padding:13px}.story-reader-body{padding:18px 14px;text-align:justify}}
  `;
  document.head.appendChild(s);
 }
@@ -50,7 +59,6 @@ function wrapTabBars(){
 
 function addStoryboardUI(){
  const dashNav=document.querySelector('#dashboardContent .tabs-nav');
- const dashPanels=[...document.querySelectorAll('#dashboardContent>.tab-panel')];
  if(dashNav&&!document.getElementById('dashPanel5')){
   const b=document.createElement('button');b.className='tab-btn';b.textContent='StoryBoard';b.onclick=()=>window.switchDashboardTab?.(5);dashNav.appendChild(b);
   const p=document.createElement('div');p.className='tab-panel';p.id='dashPanel5';p.innerHTML=`<h2 id="storyFormHeader">Manage StoryBoard</h2><input id="editingStoryId" type="hidden"><div class="form-group"><label>Title</label><input id="storyTitleInput" maxlength="120" placeholder="Story title"></div><div class="form-group"><label>Date & Time</label><input id="storyDateInput" type="datetime-local"></div><div class="form-group"><label>Story</label><textarea id="storyBodyInput" maxlength="50000" placeholder="Write your story here...\n\nNew lines and paragraphs will be preserved."></textarea></div><div class="story-form-note">Plain text only · paragraphs and line breaks are preserved · 50,000 character limit</div><button class="action-btn" id="storySaveBtn" type="button">Publish Story</button><button class="action-btn" id="storyCancelBtn" type="button" style="display:none;background:#7f8c8d;color:#fff">Cancel Edit</button><div class="preview-box"><label style="margin-bottom:10px;display:block">Story List:</label><div id="storyManagerList"></div></div>`;
@@ -60,8 +68,11 @@ function addStoryboardUI(){
  const pubNav=document.querySelector('#publicProfileView .tabs-nav');
  if(pubNav&&!document.getElementById('pubPanel4')){
   const b=document.createElement('button');b.className='tab-btn';b.textContent='StoryBoard';b.onclick=()=>{window.switchPublicTab?.(4);loadPublicStories()};pubNav.appendChild(b);
-  const panel=document.createElement('div');panel.className='tab-panel';panel.id='pubPanel4';panel.innerHTML='<div id="publicStoryList" class="storyboard-list"><div class="story-empty">No stories yet.</div></div>';
+  const panel=document.createElement('div');panel.className='tab-panel';panel.id='pubPanel4';panel.innerHTML=`<div class="story-tools"><input id="storySearchInput" type="search" maxlength="120" placeholder="Search stories..."><select id="storySortSelect" aria-label="Sort stories"><option value="new">Newest</option><option value="old">Oldest</option><option value="az">Title A–Z</option></select></div><div id="publicStoryList" class="storyboard-list"><div class="story-empty">No stories yet.</div></div><article id="storyReader" class="story-reader"><div class="story-reader-top"><button id="storyBackBtn" class="story-back" type="button">‹ Back</button><div class="story-reader-heading"><div id="storyReaderTitle" class="story-reader-title"></div><div id="storyReaderDate" class="story-reader-date"></div></div></div><div id="storyReaderBody" class="story-reader-body"></div></article>`;
   const footer=document.getElementById('publicFooter');footer?.parentNode.insertBefore(panel,footer);
+  storySearchInput.addEventListener('input',renderPublicStories);
+  storySortSelect.addEventListener('change',renderPublicStories);
+  storyBackBtn.onclick=closeStoryReader;
  }
  wrapTabBars();
 }
@@ -72,10 +83,10 @@ async function saveStory(){
  const u=auth.currentUser;if(!u)return alert('Please sign in first.');
  const title=storyTitleInput.value.trim(),body=storyBodyInput.value,date=storyDateInput.value||localNow();
  if(!title)return alert('Please enter a story title.');if(!body.trim())return alert('Please write the story.');if(body.length>50000)return alert('Story is too long. Maximum is 50,000 characters.');
- try{if(editingId)await updateDoc(doc(db,'users',u.uid,'stories',editingId),{title,body,date});else await addDoc(collection(db,'users',u.uid,'stories'),{title,body,date,position:Date.now()});clearStoryForm();await loadAdminStories(u.uid)}catch(e){console.error(e);alert('Could not save story. Check Firestore rules.')}
+ try{if(editingId)await updateDoc(doc(db,'users',u.uid,'stories',editingId),{title,body,date});else await addDoc(collection(db,'users',u.uid,'stories'),{title,body,date,position:Date.now()});clearStoryForm();await loadAdminStories(u.uid);if(publicStoryOwner===u.uid){publicStories=[];await loadPublicStories(true)}}catch(e){console.error(e);alert('Could not save story. Check Firestore rules.')}
 }
 async function editStory(id){const s=stories.find(x=>x._id===id);if(!s)return;editingId=id;storyTitleInput.value=s.title||'';storyBodyInput.value=s.body||'';storyDateInput.value=(s.date||'').slice(0,16);storyFormHeader.textContent='Edit Story';storySaveBtn.textContent='Update Story';storyCancelBtn.style.display='block';storyTitleInput.scrollIntoView({behavior:'smooth',block:'center'})}
-async function removeStory(id){const u=auth.currentUser;if(!u)return;try{await deleteDoc(doc(db,'users',u.uid,'stories',id));await loadAdminStories(u.uid)}catch(e){console.error(e);alert('Could not delete story.')}}
+async function removeStory(id){const u=auth.currentUser;if(!u)return;try{await deleteDoc(doc(db,'users',u.uid,'stories',id));await loadAdminStories(u.uid);if(publicStoryOwner===u.uid){publicStories=[];await loadPublicStories(true)}}catch(e){console.error(e);alert('Could not delete story.')}}
 async function loadAdminStories(uid){
  try{const s=await getDocs(query(collection(db,'users',uid,'stories'),orderBy('position','desc')));stories=s.docs.map(d=>({_id:d.id,...d.data()}));renderManager()}catch(e){console.warn('StoryBoard unavailable:',e);stories=[];renderManager()}
 }
@@ -86,11 +97,22 @@ async function resolvePublicOwner(){
  if(slug){try{const s=await getDocs(query(collection(db,'users'),where('slug','==',slug),limit(1)));if(!s.empty)return s.docs[0].id}catch(e){console.warn(e)}}
  return auth.currentUser?.uid||null;
 }
-async function loadPublicStories(){
+function closeStoryReader(){const reader=document.getElementById('storyReader'),list=document.getElementById('publicStoryList'),tools=document.querySelector('#pubPanel4 .story-tools');if(reader)reader.classList.remove('open');if(list)list.style.display='grid';if(tools)tools.style.display='grid'}
+function openStoryReader(s){const reader=document.getElementById('storyReader'),list=document.getElementById('publicStoryList'),tools=document.querySelector('#pubPanel4 .story-tools');if(!reader)return;storyReaderTitle.textContent=s.title||'Story';storyReaderDate.textContent=fmtDate(s.date);storyReaderBody.textContent=s.body||'';if(list)list.style.display='none';if(tools)tools.style.display='none';reader.classList.add('open');reader.scrollIntoView({behavior:'smooth',block:'start'})}
+function renderPublicStories(){
+ const list=document.getElementById('publicStoryList');if(!list)return;closeStoryReader();
+ const q=(document.getElementById('storySearchInput')?.value||'').trim().toLowerCase(),sort=document.getElementById('storySortSelect')?.value||'new';
+ let rows=publicStories.filter(s=>!q||`${s.title||''}\n${s.body||''}`.toLowerCase().includes(q));
+ rows=[...rows].sort((a,b)=>sort==='old'?storyTime(a)-storyTime(b):sort==='az'?String(a.title||'').localeCompare(String(b.title||''),undefined,{sensitivity:'base'}):storyTime(b)-storyTime(a));
+ list.innerHTML='';if(!rows.length){list.innerHTML=`<div class="story-empty">${publicStories.length?'No matching stories.':'No stories yet.'}</div>`;return}
+ rows.forEach(x=>{const c=document.createElement('article');c.className='story-card';const btn=document.createElement('button');btn.type='button';btn.className='story-card-btn';btn.innerHTML=`<div class="story-card-title">${esc(x.title||'Story')}</div><div class="story-card-date">${esc(fmtDate(x.date))}</div><div class="story-preview">${esc((x.body||'').trim())}</div><div class="story-read-link">Read ›</div>`;btn.onclick=()=>openStoryReader(x);c.appendChild(btn);list.appendChild(c)})
+}
+async function loadPublicStories(force=false){
  const list=document.getElementById('publicStoryList');if(!list)return;
- publicStoryOwner=publicStoryOwner||await resolvePublicOwner();if(!publicStoryOwner){list.innerHTML='<div class="story-empty">No stories yet.</div>';return}
+ publicStoryOwner=publicStoryOwner||await resolvePublicOwner();if(!publicStoryOwner){publicStories=[];renderPublicStories();return}
+ if(publicStories.length&&!force){renderPublicStories();return}
  list.innerHTML='<div class="story-empty">Loading stories...</div>';
- try{const s=await getDocs(query(collection(db,'users',publicStoryOwner,'stories'),orderBy('position','desc'),limit(100)));const rows=s.docs.map(d=>({_id:d.id,...d.data()}));list.innerHTML='';if(!rows.length){list.innerHTML='<div class="story-empty">No stories yet.</div>';return}rows.forEach(x=>{const c=document.createElement('article');c.className='story-card';const h=document.createElement('button');h.type='button';h.className='story-head';h.innerHTML=`<span class="story-head-copy"><span class="story-head-title">${esc(x.title||'Story')}</span><span class="story-head-date">${esc(fmtDate(x.date))}</span></span><span class="story-arrow">›</span>`;const body=document.createElement('div');body.className='story-body';body.textContent=x.body||'';h.onclick=()=>c.classList.toggle('open');c.append(h,body);list.appendChild(c)})}catch(e){console.warn('Could not load stories:',e);list.innerHTML='<div class="story-empty">StoryBoard unavailable.</div>'}
+ try{const s=await getDocs(query(collection(db,'users',publicStoryOwner,'stories'),orderBy('position','desc'),limit(100)));publicStories=s.docs.map(d=>({_id:d.id,...d.data()}));renderPublicStories()}catch(e){console.warn('Could not load stories:',e);list.innerHTML='<div class="story-empty">StoryBoard unavailable.</div>'}
 }
 window.loadPublicStories=loadPublicStories;
 
