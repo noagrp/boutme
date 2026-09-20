@@ -40,13 +40,24 @@ function contactData(){
 }
 function syncContactActions(){
  if(!contactHub)return false;
- const d=contactData(),points=[[10,-58],[58,-32],[72,18],[46,64]],visible=[];
+ const d=contactData(),visible=[];
  contactHub.querySelectorAll('[data-contact]').forEach(b=>{
   const key=b.dataset.contact,ok=!!d[key];
   b.hidden=!ok;
   if(ok)visible.push(b);
  });
- visible.forEach((b,i)=>{const p=points[Math.min(i,points.length-1)];b.style.setProperty('--cx',p[0]+'px');b.style.setProperty('--cy',p[1]+'px')});
+ const mobile=matchMedia('(max-width:600px)').matches;
+ const size=mobile?36:40;
+ const gap=mobile?12:14;
+ const startY=size+gap;
+ const step=size+gap;
+ const points=[
+  [0,startY],
+  [step*.78,startY+step*.58],
+  [step*1.45,startY+step*1.42],
+  [step*1.78,startY+step*2.42]
+ ];
+ visible.forEach((b,i)=>{const p=points[Math.min(i,points.length-1)];b.style.setProperty('--cx',Math.round(p[0])+'px');b.style.setProperty('--cy',Math.round(p[1])+'px')});
  contactHub.classList.toggle('empty',visible.length===0);
  if(!visible.length&&contactOpen){contactOpen=false;contactHub.classList.remove('open')}
  return visible.length>0;
@@ -105,3 +116,4 @@ document.head.appendChild(style);
 
 const refreshContacts=new MutationObserver(()=>syncContactActions());
 if(document.getElementById('publicProfileView'))refreshContacts.observe(document.getElementById('publicProfileView'),{attributes:true,attributeFilter:['style']});
+addEventListener('resize',()=>{if(contactHub)syncContactActions()},{passive:true});
