@@ -15,7 +15,14 @@ if(header&&clock){
   if(!controls.parentElement)header.appendChild(controls);
  }
 
- controls.appendChild(clock);
+ let clockWrap=controls.querySelector('.clock-control-wrap');
+ if(!clockWrap){
+  clockWrap=document.createElement('div');
+  clockWrap.className='clock-control-wrap';
+  controls.appendChild(clockWrap);
+ }
+ clockWrap.appendChild(clock);
+ if(pop)clockWrap.appendChild(pop);
 
  const oldTheme=[...controls.querySelectorAll('button'),...header.querySelectorAll('button')].find(b=>b!==clock&&b!==back&&/theme/i.test(b.textContent||''));
  if(oldTheme){
@@ -35,7 +42,6 @@ if(header&&clock){
   controls.appendChild(back);
  }
  clock.classList.add('round-control','clock-orb');
- if(pop&&identity)identity.appendChild(pop);
 
  [...header.children].forEach(child=>{
   if(child!==identity&&child!==controls&&!child.children.length&&!child.textContent.trim())child.remove();
@@ -64,7 +70,8 @@ style.textContent=`
 #publicProfileView>div:first-child{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:10px!important;grid-auto-flow:column!important}
 .public-identity{min-width:0!important;display:flex!important;align-items:center!important;gap:9px!important;overflow:visible!important}
 .public-view-label{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-.public-round-controls{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:7px!important;flex:0 0 auto!important;white-space:nowrap!important}
+.public-round-controls{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:7px!important;flex:0 0 auto!important;white-space:nowrap!important;overflow:visible!important}
+.clock-control-wrap{position:relative!important;display:grid!important;place-items:center!important;flex:0 0 auto!important;overflow:visible!important}
 .public-round-controls .round-control{position:relative;display:grid;place-items:center;width:40px!important;height:40px!important;min-width:40px!important;padding:0!important;margin:0!important;border-radius:50%!important;border:1px solid var(--border-color)!important;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease!important}
 .public-round-controls .round-control:hover{transform:translateY(-1px) scale(1.04);box-shadow:0 6px 16px #0004}
 .public-round-controls .round-control:active{transform:scale(.95)}
@@ -76,7 +83,8 @@ style.textContent=`
 .public-round-controls .theme-orb[data-next-theme="chameleon"]{background:conic-gradient(from 30deg,#00e5ff,#34ff8b,#f6ff3b,#ff9a19,#ff3d91,#8b42ff,#00e5ff)!important;border-color:#fff8!important}
 .public-round-controls .back-orb{background:var(--card-bg)!important;color:var(--text-color)!important}
 .switch-view-icon{width:20px;height:20px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.clock-pop{left:auto!important;right:94px!important;top:50px!important}
-@media(max-width:600px){#publicProfileView>div:first-child{gap:7px!important;padding-left:10px!important;padding-right:10px!important}.public-round-controls{gap:5px!important}.public-round-controls .round-control{width:36px!important;height:36px!important;min-width:36px!important}.switch-view-icon{width:18px;height:18px}.clock-pop{right:80px!important;top:46px!important}}
+.clock-control-wrap .clock-pop{left:50%!important;right:auto!important;top:50px!important;transform:translateX(-50%)!important}
+.clock-control-wrap .clock-pop:before{left:50%!important;transform:translateX(-50%) rotate(45deg)!important}
+@media(max-width:600px){#publicProfileView>div:first-child{gap:7px!important;padding-left:10px!important;padding-right:10px!important}.public-round-controls{gap:5px!important}.public-round-controls .round-control{width:36px!important;height:36px!important;min-width:36px!important}.switch-view-icon{width:18px;height:18px}.clock-control-wrap .clock-pop{top:46px!important}}
 `;
 document.head.appendChild(style);
