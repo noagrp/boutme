@@ -22,6 +22,50 @@
 #pubWall .tv-box.video-focus{grid-column:1/-1!important;transform:rotate(0deg) translateY(0) scale(1)!important;z-index:6;box-shadow:0 22px 55px #000b}
 #pubWall .tv-box.video-focus:hover{transform:rotate(0deg) translateY(0) scale(1)!important}
 #pubWall .tv-title{cursor:pointer}
+
+/* Public profile watch clock */
+#publicProfileView>div:first-child{overflow:visible!important}
+.public-identity{overflow:visible!important}
+.mini-clock{
+  --clock-face:linear-gradient(145deg,#20232a,#090a0d);
+  --clock-ink:#f7f8fb;
+  --clock-second:#ff4757;
+  position:relative!important;
+  width:42px!important;height:42px!important;flex:0 0 42px!important;
+  border:1px solid color-mix(in srgb,var(--border-color) 72%,#fff 28%)!important;
+  border-radius:50%!important;padding:0!important;cursor:pointer!important;
+  background:var(--clock-face)!important;color:var(--clock-ink)!important;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.07),inset 0 -7px 12px rgba(0,0,0,.32),0 4px 12px rgba(0,0,0,.28)!important;
+  transition:transform .18s ease,box-shadow .18s ease!important;
+}
+.mini-clock:hover{transform:translateY(-1px) scale(1.035);box-shadow:inset 0 0 0 2px rgba(255,255,255,.09),inset 0 -7px 12px rgba(0,0,0,.28),0 7px 16px rgba(0,0,0,.34)!important}
+.mini-clock:active{transform:scale(.97)}
+.mini-clock:before{
+  content:''!important;display:block!important;position:absolute!important;inset:5px!important;border-radius:50%!important;
+  background:repeating-conic-gradient(from -1deg,currentColor 0 1.1deg,transparent 1.1deg 29deg)!important;
+  opacity:.42!important;mask:radial-gradient(circle,transparent 0 71%,#000 72% 100%)!important;
+  -webkit-mask:radial-gradient(circle,transparent 0 71%,#000 72% 100%)!important;
+}
+.mini-clock:after{
+  content:'';position:absolute;inset:2px;border-radius:50%;pointer-events:none;
+  background:linear-gradient(140deg,rgba(255,255,255,.24),transparent 35%,transparent 68%,rgba(255,255,255,.05));
+}
+.clock-hour,.clock-minute{position:absolute!important;left:50%!important;bottom:50%!important;z-index:3!important;display:block!important;transform-origin:50% 100%!important;border-radius:4px!important}
+.clock-hour{height:9px!important;width:3px!important;background:var(--clock-ink)!important;box-shadow:0 0 3px rgba(0,0,0,.4)}
+.clock-minute{height:13px!important;width:2px!important;background:var(--clock-second)!important;opacity:1!important;box-shadow:0 0 4px color-mix(in srgb,var(--clock-second) 60%,transparent)}
+.clock-dot{position:absolute!important;left:50%!important;top:50%!important;z-index:4!important;width:6px!important;height:6px!important;border-radius:50%!important;background:var(--clock-ink)!important;transform:translate(-50%,-50%)!important;box-shadow:0 0 0 2px var(--clock-second)!important}
+.clock-pop{
+  top:51px!important;left:0!important;min-width:178px!important;padding:13px 15px!important;
+  border:1px solid var(--border-color)!important;border-radius:13px!important;
+  background:color-mix(in srgb,var(--card-bg) 94%,transparent)!important;color:var(--text-color)!important;
+  box-shadow:0 16px 38px rgba(0,0,0,.34)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.clock-pop:before{content:'';position:absolute;left:15px;top:-6px;width:10px;height:10px;background:inherit;border-left:1px solid var(--border-color);border-top:1px solid var(--border-color);transform:rotate(45deg)}
+.clock-pop strong{font-size:1.15rem!important;line-height:1.15;letter-spacing:.02em}
+.clock-pop span{margin-top:5px!important;font-size:.72rem!important;line-height:1.35;opacity:.68!important}
+[data-theme="white"] .mini-clock{--clock-face:linear-gradient(145deg,#fff,#e9eaee);--clock-ink:#17191d;--clock-second:#e23a45;box-shadow:inset 0 0 0 2px #fff,0 4px 12px #0002!important}
+[data-theme="chameleon"] .mini-clock{--clock-face:linear-gradient(145deg,rgba(255,255,255,.92),rgba(255,255,255,.56));--clock-ink:#141722;--clock-second:#6b24c9;box-shadow:inset 0 0 0 2px rgba(255,255,255,.5),0 5px 16px rgba(50,20,90,.22)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+@media(max-width:600px){.mini-clock{width:40px!important;height:40px!important;flex-basis:40px!important}.clock-pop{top:49px!important;min-width:166px!important}}
 </style>
 <script>
 document.addEventListener('click',function(e){const title=e.target.closest('.tv-title');if(!title)return;const card=title.closest('.tv-box');if(!card||!card.closest('#pubWall'))return;const wasOpen=card.classList.contains('video-focus');document.querySelectorAll('#pubWall .tv-box.video-focus').forEach(function(x){x.classList.remove('video-focus')});if(!wasOpen)card.classList.add('video-focus')});
