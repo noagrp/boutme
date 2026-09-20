@@ -48,14 +48,17 @@ function syncContactActions(){
  });
  const mobile=matchMedia('(max-width:600px)').matches;
  const size=mobile?36:40;
+ const safeTop=mobile?8:10;
  const gap=mobile?12:14;
- const startY=size+gap;
+ const hubTop=contactHub.getBoundingClientRect().top;
+ const desiredEmailY=mobile?-54:-60;
+ const emailY=Math.max(desiredEmailY,safeTop-hubTop);
  const step=size+gap;
  const points=[
-  [0,startY],
-  [step*.78,startY+step*.58],
-  [step*1.45,startY+step*1.42],
-  [step*1.78,startY+step*2.42]
+  [8,emailY],
+  [8+step*.92,emailY+step*.5],
+  [8+step*1.55,emailY+step*1.35],
+  [8+step*1.72,emailY+step*2.35]
  ];
  visible.forEach((b,i)=>{const p=points[Math.min(i,points.length-1)];b.style.setProperty('--cx',Math.round(p[0])+'px');b.style.setProperty('--cy',Math.round(p[1])+'px')});
  contactHub.classList.toggle('empty',visible.length===0);
