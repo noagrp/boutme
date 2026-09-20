@@ -27,10 +27,11 @@ if(header&&clock){
   controls.appendChild(oldTheme);
  }
  if(back){
-  back.textContent='‹';
+  back.innerHTML='<svg class="switch-view-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 7.1A6.6 6.6 0 0 1 18 9.2"/><path d="M17.9 5.8v3.7h-3.7"/><path d="M16.5 16.9A6.6 6.6 0 0 1 6 14.8"/><path d="M6.1 18.2v-3.7h3.7"/></svg>';
   back.className='round-control back-orb';
   back.removeAttribute('style');
-  back.setAttribute('aria-label','Back to dashboard');
+  back.setAttribute('aria-label','Dashboard');
+  back.title='Dashboard';
   controls.appendChild(back);
  }
  clock.classList.add('round-control','clock-orb');
@@ -73,8 +74,9 @@ style.textContent=`
 .public-round-controls .theme-orb[data-next-theme="very-black"]{background:#050505!important;border-color:#444!important}
 .public-round-controls .theme-orb[data-next-theme="white"]{background:#fff!important;border-color:#bbb!important}
 .public-round-controls .theme-orb[data-next-theme="chameleon"]{background:conic-gradient(from 30deg,#00e5ff,#34ff8b,#f6ff3b,#ff9a19,#ff3d91,#8b42ff,#00e5ff)!important;border-color:#fff8!important}
-.public-round-controls .back-orb{background:var(--card-bg)!important;color:var(--text-color)!important;font-size:28px!important;font-weight:300!important;line-height:1!important}
+.public-round-controls .back-orb{background:var(--card-bg)!important;color:var(--text-color)!important}
+.switch-view-icon{width:20px;height:20px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .clock-pop{left:auto!important;right:94px!important;top:50px!important}
-@media(max-width:600px){#publicProfileView>div:first-child{gap:7px!important;padding-left:10px!important;padding-right:10px!important}.public-round-controls{gap:5px!important}.public-round-controls .round-control{width:36px!important;height:36px!important;min-width:36px!important}.clock-pop{right:80px!important;top:46px!important}}
+@media(max-width:600px){#publicProfileView>div:first-child{gap:7px!important;padding-left:10px!important;padding-right:10px!important}.public-round-controls{gap:5px!important}.public-round-controls .round-control{width:36px!important;height:36px!important;min-width:36px!important}.switch-view-icon{width:18px;height:18px}.clock-pop{right:80px!important;top:46px!important}}
 `;
 document.head.appendChild(style);
