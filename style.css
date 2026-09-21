@@ -50,3 +50,19 @@
   .wall-remote.open [data-act="repeat"]{transform:translate(0,-96px) scale(1)!important}
   .wall-remote.open [data-act="station"]{transform:translate(0,-144px) scale(1)!important}
 }
+
+/* Give flipped-L remote controls clear separation */
+.wall-remote.open [data-act="prev"]{transform:translate(-174px,0) scale(1)!important}
+.wall-remote.open [data-act="play"]{transform:translate(-116px,0) scale(1)!important}
+.wall-remote.open [data-act="next"]{transform:translate(-58px,0) scale(1)!important}
+.wall-remote.open [data-act="shuffle"]{transform:translate(0,-58px) scale(1)!important}
+.wall-remote.open [data-act="repeat"]{transform:translate(0,-116px) scale(1)!important}
+.wall-remote.open [data-act="station"]{transform:translate(0,-174px) scale(1)!important}
+@media(max-width:700px){
+  .wall-remote.open [data-act="prev"]{transform:translate(-168px,0) scale(1)!important}
+  .wall-remote.open [data-act="play"]{transform:translate(-112px,0) scale(1)!important}
+  .wall-remote.open [data-act="next"]{transform:translate(-56px,0) scale(1)!important}
+  .wall-remote.open [data-act="shuffle"]{transform:translate(0,-56px) scale(1)!important}
+  .wall-remote.open [data-act="repeat"]{transform:translate(0,-112px) scale(1)!important}
+  .wall-remote.open [data-act="station"]{transform:translate(0,-168px) scale(1)!important}
+}
